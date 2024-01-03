@@ -2,8 +2,12 @@ package dk.bank.accountmanager;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
+
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -15,77 +19,79 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 
 import dk.bank.accountmanager.entity.Account;
+import dk.bank.accountmanager.exceptions.InvalidAmountException;
 import dk.bank.accountmanager.interfaces.IAccountRepository;
-import dk.bank.accountmanager.interfaces.IAccountService;
+import dk.bank.accountmanager.services.AccountService;
 
 @ExtendWith(SpringExtension.class)
 public class AccountServiceTests {
 	
 	@MockBean
-	IAccountRepository accountRepository;
+	private static IAccountRepository accountRepository;
 	
 	@Autowired
-	IAccountService accountService;
+	private AccountService accountService;
 	
-	private Account testAccount; 
+	private static Account testAccount; 
 	
-	void setUp() {
-		testAccount = new Account();
-		testAccount.setName("Test Account");
-		testAccount.setBalance(0.0);
+	@BeforeAll
+	private static void setUp() {
+		testAccount = new Account(1L, "Test Account", 200.00);
 	}
 	
 	@Test
-	void createAccount() {
-		String name = "Test Konto";
-		Account newAccount = new Account(name, 200.00);
-		accountId = testAccount.getAccountId(); //accountService.createAccount(name);
-		assertThat(testAccount).isNotNull(); //(accountService.getAccount(accountId)).isNotNull();
+	void createAccount_validDetails_ReturnCreatedAccount() throws Exception {
+		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
+		when(accountRepository.getAccount(1L)).thenReturn(testAccount);
+		Account accountToCreate = new Account();
+		accountToCreate.setName("Test Account");
+		accountToCreate.setBalance(200.0);
+		when(accountRepository.saveAccount(accountToCreate)).thenReturn(1L);
+		
+		testAccount = accountService.createAccount(testAccount);
+		assertThat(testAccount.getAccountId()).isEqualTo(1L);
 	}
 	
 	@Test
-	void depositMoney() {
+	void depositMoney_validAmount_ReturnUpdatedAccount() throws Exception {
+		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
+		when(accountRepository.getAccount(1L)).thenReturn(testAccount);
 		double deposit = 100.00;
 		double newTotal = testAccount.getBalance() + deposit;
-		testAccount.setBalance(newTotal);
+		testAccount = accountService.depositMoney(testAccount.getAccountId(), deposit);
+		
 		assertThat(testAccount.getBalance()).isEqualTo(newTotal);
 	}
 	
 	@Test
-	void depositInvalidAmount() {
+	void depositMoney_invalidAmount_throwInvalidAmountException() {
 		double deposit = -100.00;
-		double curentBalance = testAccount.getBalance();
-		if(deposit > 0) {
-			double newTotal = testAccount.getBalance() + deposit;
-			testAccount.setBalance(newTotal);
-		}
-		assertThat(testAccount.getBalance()).isEqualTo(curentBalance);
+	
+		assertThrows(InvalidAmountException.class, () -> 
+					accountService.depositMoney(testAccount.getAccountId(), deposit));
 	}
 	
 	@Test
-	void withdrawMoney() {
+	void withdrawMoney_validAmount_ReturnUpdatedAccount() throws Exception {
+		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
+		when(accountRepository.getAccount(1L)).thenReturn(testAccount);
 		double deposit = 100.00;
 		double newTotal = testAccount.getBalance() - deposit;
-		testAccount.setBalance(newTotal);
+		testAccount = accountService.depositMoney(testAccount.getAccountId(), deposit);
 		assertThat(testAccount.getBalance()).isEqualTo(newTotal);
 	}
 	
 	@Test
-	void withdrawInvalidAmount() {
+	void withdrawMoney_invalidAmount_throwInvalidAmountException() {
 		double deposit = -100.00;
-		double curentBalance = testAccount.getBalance();
-		if(deposit > 0 && deposit < curentBalance) {
-			double newTotal = testAccount.getBalance() - deposit;
-			testAccount.setBalance(newTotal);
-		}
-		assertThat(testAccount.getBalance()).isEqualTo(curentBalance);
-		
-		deposit = 9999999.00;
-		if(deposit > 0 && deposit < curentBalance) {
-			double newTotal = testAccount.getBalance() - deposit;
-			testAccount.setBalance(newTotal);
-		}
-		assertThat(testAccount.getBalance()).isEqualTo(curentBalance);
+		assertThrows(InvalidAmountException.class, () -> 
+			accountService.depositMoney(testAccount.getAccountId(), deposit));
+	}
+	
+	void withdrawMoney_tooLargeAmount_throwInvalidAmountException() {
+		double deposit = 99999.99;
+		assertThrows(InvalidAmountException.class, () -> 
+			accountService.depositMoney(testAccount.getAccountId(), deposit));
 	}
 
 }

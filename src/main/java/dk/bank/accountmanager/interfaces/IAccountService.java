@@ -7,7 +7,7 @@ import dk.bank.accountmanager.entity.Transaction;
 
 public interface IAccountService {
 	
-	Account createAccount(String name) throws Exception;
+	Account createAccount(Account account) throws Exception;
 	Account getAccount(long accountId) throws Exception;
 	Account depositMoney(long accountId, double amount) throws Exception;
 	Account withdrawMoney(long accountId, double amount) throws Exception;

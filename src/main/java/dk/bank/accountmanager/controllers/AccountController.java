@@ -22,9 +22,9 @@ public class AccountController {
 	@Autowired
 	private IAccountService accountService;
 	
-	@PostMapping(value = "", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Account> createAccount(@RequestBody String name) throws Exception{	
-		Account newAccount = accountService.createAccount(name);
+	@PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Account> createAccount(@RequestBody Account account) throws Exception{	
+		Account newAccount = accountService.createAccount(account);
 		return new ResponseEntity<>(newAccount, HttpStatus.CREATED);	
 	}
 	
