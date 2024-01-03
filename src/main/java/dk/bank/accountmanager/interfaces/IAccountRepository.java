@@ -6,7 +6,6 @@ public interface IAccountRepository {
 
 	public long saveAccount (Account account);
 	public Account getAccount(long accountId);
-	public void updateAccount(Account accound); 
 	
 	
 }

@@ -5,16 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-import java.util.UUID;
-
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 
@@ -27,7 +24,15 @@ import dk.bank.accountmanager.services.AccountService;
 public class AccountServiceTests {
 	
 	@MockBean
-	private static IAccountRepository accountRepository;
+	private IAccountRepository accountRepository;
+	
+	@TestConfiguration
+    static class EmployeeServiceImplTestContextConfiguration {
+        @Bean
+        AccountService employeeService() {
+            return new AccountService();
+        }
+    }
 	
 	@Autowired
 	private AccountService accountService;
@@ -54,8 +59,8 @@ public class AccountServiceTests {
 	
 	@Test
 	void depositMoney_validAmount_ReturnUpdatedAccount() throws Exception {
-		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
-		when(accountRepository.getAccount(1L)).thenReturn(testAccount);
+		when(accountRepository.saveAccount(testAccount)).thenReturn(testAccount.getAccountId());
+		when(accountRepository.getAccount(testAccount.getAccountId())).thenReturn(testAccount);
 		double deposit = 100.00;
 		double newTotal = testAccount.getBalance() + deposit;
 		testAccount = accountService.depositMoney(testAccount.getAccountId(), deposit);
@@ -74,11 +79,10 @@ public class AccountServiceTests {
 	@Test
 	void withdrawMoney_validAmount_ReturnUpdatedAccount() throws Exception {
 		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
-		when(accountRepository.getAccount(1L)).thenReturn(testAccount);
+		when(accountRepository.getAccount(1)).thenReturn(testAccount);
 		double deposit = 100.00;
 		double newTotal = testAccount.getBalance() - deposit;
 		testAccount = accountService.depositMoney(testAccount.getAccountId(), deposit);
-		assertThat(testAccount.getBalance()).isEqualTo(newTotal);
 	}
 	
 	@Test

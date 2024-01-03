@@ -14,7 +14,6 @@ public class Transaction implements Serializable {
 	double amount;
 	LocalDateTime timestamp;
 	String name;
-	String details;
 	
 	public Transaction(long transactionId, double amount, LocalDateTime timestamp, String name, String details) {
 		super();
@@ -22,7 +21,9 @@ public class Transaction implements Serializable {
 		this.amount = amount;
 		this.timestamp = timestamp;
 		this.name = name;
-		this.details = details;
+	}
+
+	public Transaction() {
 	}
 
 	public long getTransactionId() {
@@ -56,15 +57,5 @@ public class Transaction implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
-
-	public String getDetails() {
-		return details;
-	}
-
-	public void setDetails(String details) {
-		this.details = details;
-	}
-	
-	
 
 }

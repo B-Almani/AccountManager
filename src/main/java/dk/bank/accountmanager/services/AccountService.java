@@ -1,12 +1,14 @@
 package dk.bank.accountmanager.services;
 
 
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import dk.bank.accountmanager.entity.Account;
+import dk.bank.accountmanager.entity.Transaction;
 import dk.bank.accountmanager.exceptions.InvalidAccountNameException;
 import dk.bank.accountmanager.exceptions.InvalidAmountException;
 import dk.bank.accountmanager.interfaces.IAccountRepository;
@@ -25,7 +27,6 @@ public class AccountService implements IAccountService {
 			throw new InvalidAccountNameException("Illegal symbol used in account name");
 		}
 		
-
 		Account createdAccount = saveAndReturnAccount(account);
 		
 		return createdAccount;
@@ -76,8 +77,15 @@ public class AccountService implements IAccountService {
 		return account.getBalance();
 	}
 	
+	@Override
+	public List<Transaction> getTransactions(long accountId, int listSize) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
 	private boolean isAccountNameValid(String name) {
-		boolean isValid = name.matches("^[a-zA-Z0-9]*$") ?  true:  false;
+		boolean isValid = name.matches("^[a-zA-Z0-9 ]*$") ?  true:  false;
 		return isValid;
 	}
 	

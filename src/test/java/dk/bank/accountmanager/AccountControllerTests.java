@@ -1,34 +1,30 @@
 package dk.bank.accountmanager;
 
-import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.*;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import dk.bank.accountmanager.controllers.AccountController;
 import dk.bank.accountmanager.entity.Account;
@@ -46,17 +42,13 @@ public class AccountControllerTests {
 	@Autowired
     private MockMvc mvc;
 	
-	private static Account testAccount; //=  new Account(1L, "Test Savings", 100.0, new ArrayList<>());
-	//private static List<Transaction> spyTransactions;
-	private static ObjectMapper objectMapper;
+	@Spy
+	private List<Transaction> spyTransactions = new ArrayList<Transaction>();
 	
-	@BeforeAll
-	public static void init() {
-		testAccount =  new Account(1L, "Test Savings", 100.0);
-		objectMapper = new ObjectMapper();
-		//spyTransactions = spy(testAccount.getTransactions());
-		
-	}
+	private Account testAccount = new Account(1L, "Test Savings", 100.0);
+	
+	private ObjectMapper objectMapper = new ObjectMapper();
+	
 	
 	@Test
 	void createAccount_validData_statusCreatedReturnAccount() throws Exception {
@@ -97,7 +89,6 @@ public class AccountControllerTests {
 		double newBalance = testAccount.getBalance() + depositAmount;
 		testAccount.setBalance(newBalance);
 		
-		//when(spyTransactions.size()).thenReturn(1);
 		when(accountService.depositMoney(testAccount.getAccountId(), depositAmount)).thenReturn(testAccount);
 		
 		mvc.perform(put("/api/v1/accounts/deposit/"+testAccount.getAccountId())
@@ -155,5 +146,34 @@ public class AccountControllerTests {
 			     .andExpect(content().string(testAccount.getBalance()+""));
 	}
 	
-
+	@Test
+	void getTransactions_noSizeParam_return10Transactions() throws Exception {
+		populateTransactionList(spyTransactions, 10);
+		//when(spyTransactions.size()).thenReturn(10);
+		when(accountService.getTransactions(testAccount.getAccountId(), 10)).thenReturn(spyTransactions);
+		
+		mvc.perform(get("/api/v1/accounts/"+testAccount.getAccountId()+"/transactions")
+			     .contentType(MediaType.APPLICATION_JSON_VALUE))
+			     .andExpect(status().isOk())
+			     .andExpect(jsonPath("$", hasSize(10)));
+	}
+	
+	@Test
+	void getTransactions_GivenSizeParam_returnTransactionsOfSize() throws Exception {
+		populateTransactionList(spyTransactions, 2);
+		when(accountService.getTransactions(testAccount.getAccountId(), 2)).thenReturn(spyTransactions);
+		
+		mvc.perform(get("/api/v1/accounts/"+testAccount.getAccountId()+"/transactions?size=2")
+			     .contentType(MediaType.APPLICATION_JSON_VALUE))
+			     .andExpect(status().isOk())
+			     .andExpect(jsonPath("$", hasSize(2)));
+	}
+	
+	private void populateTransactionList(List<Transaction> transactions, int size) {
+		int i = 0;
+		while(i < size) {
+			transactions.add(new Transaction());
+			i++;
+		}
+	}
 }

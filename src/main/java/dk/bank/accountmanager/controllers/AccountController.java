@@ -1,5 +1,7 @@
 package dk.bank.accountmanager.controllers;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -10,9 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import dk.bank.accountmanager.entity.Account;
+import dk.bank.accountmanager.entity.Transaction;
 import dk.bank.accountmanager.interfaces.IAccountService;
 
 @RestController
@@ -44,6 +48,13 @@ public class AccountController {
 	public ResponseEntity<Double> getAvailableBalance(@PathVariable Long accountId) throws Exception{	
 		double availableBalance = accountService.getAvailableBalance(accountId);
 		return new ResponseEntity<>(availableBalance, HttpStatus.OK);
+	}
+	
+	@GetMapping(value = "/{accountId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<List<Transaction>> getAccountTransactions(@PathVariable Long accountId, 
+			@RequestParam(name = "size", required = false, defaultValue = "10") Integer size) throws Exception{	
+		List<Transaction> transactions = accountService.getTransactions(accountId, size);
+		return new ResponseEntity<>(transactions, HttpStatus.OK);
 	}
 
 }

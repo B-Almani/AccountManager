@@ -11,6 +11,7 @@ public interface IAccountService {
 	Account getAccount(long accountId) throws Exception;
 	Account depositMoney(long accountId, double amount) throws Exception;
 	Account withdrawMoney(long accountId, double amount) throws Exception;
-	double getAvailableBalance (long accountId);
+	double getAvailableBalance (long accountId)throws Exception;
+	List<Transaction> getTransactions(long accountId, int listSize) throws Exception;
 	
 }

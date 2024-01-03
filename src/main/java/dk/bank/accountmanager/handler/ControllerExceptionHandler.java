@@ -21,4 +21,10 @@ public class ControllerExceptionHandler {
 	    public String amountExceptionHandler() {
 			return "Invalid amount";
 	    }
+	 	
+		@ResponseStatus(HttpStatus.BAD_REQUEST) 
+	    @ExceptionHandler(IllegalArgumentException.class)
+	    public String invalidArgumentException() {
+			return "Recieved invalid data";
+		}
 }
