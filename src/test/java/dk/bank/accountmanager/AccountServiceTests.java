@@ -3,7 +3,11 @@ package dk.bank.accountmanager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,8 +20,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 
 import dk.bank.accountmanager.entity.Account;
+import dk.bank.accountmanager.entity.Transaction;
 import dk.bank.accountmanager.exceptions.InvalidAmountException;
 import dk.bank.accountmanager.interfaces.IAccountRepository;
+import dk.bank.accountmanager.interfaces.ITransactionRepository;
 import dk.bank.accountmanager.services.AccountService;
 
 @ExtendWith(SpringExtension.class)
@@ -25,6 +31,11 @@ public class AccountServiceTests {
 	
 	@MockBean
 	private IAccountRepository accountRepository;
+	
+	@MockBean
+	private ITransactionRepository transactionRepository;
+	
+	private List<Transaction> transactions = new ArrayList<>();
 	
 	@TestConfiguration
     static class EmployeeServiceImplTestContextConfiguration {
@@ -37,12 +48,7 @@ public class AccountServiceTests {
 	@Autowired
 	private AccountService accountService;
 	
-	private static Account testAccount; 
-	
-	@BeforeAll
-	private static void setUp() {
-		testAccount = new Account(1L, "Test Account", 200.00);
-	}
+	private Account testAccount = new Account(1L, "Test Account", 200.00); 
 	
 	@Test
 	void createAccount_validDetails_ReturnCreatedAccount() throws Exception {
@@ -61,8 +67,10 @@ public class AccountServiceTests {
 	void depositMoney_validAmount_ReturnUpdatedAccount() throws Exception {
 		when(accountRepository.saveAccount(testAccount)).thenReturn(testAccount.getAccountId());
 		when(accountRepository.getAccount(testAccount.getAccountId())).thenReturn(testAccount);
+		
 		double deposit = 100.00;
 		double newTotal = testAccount.getBalance() + deposit;
+		
 		testAccount = accountService.depositMoney(testAccount.getAccountId(), deposit);
 		
 		assertThat(testAccount.getBalance()).isEqualTo(newTotal);
@@ -80,22 +88,54 @@ public class AccountServiceTests {
 	void withdrawMoney_validAmount_ReturnUpdatedAccount() throws Exception {
 		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
 		when(accountRepository.getAccount(1)).thenReturn(testAccount);
+		
 		double deposit = 100.00;
 		double newTotal = testAccount.getBalance() - deposit;
-		testAccount = accountService.depositMoney(testAccount.getAccountId(), deposit);
+		
+		testAccount = accountService.withdrawMoney(testAccount.getAccountId(), deposit);
+		assertThat(testAccount.getBalance()).isEqualTo(newTotal);
 	}
 	
 	@Test
 	void withdrawMoney_invalidAmount_throwInvalidAmountException() {
+		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
+		when(accountRepository.getAccount(1)).thenReturn(testAccount);
+		
 		double deposit = -100.00;
 		assertThrows(InvalidAmountException.class, () -> 
-			accountService.depositMoney(testAccount.getAccountId(), deposit));
+			accountService.withdrawMoney(testAccount.getAccountId(), deposit));
 	}
 	
+	@Test
 	void withdrawMoney_tooLargeAmount_throwInvalidAmountException() {
+		when(accountRepository.saveAccount(testAccount)).thenReturn(1L);
+		when(accountRepository.getAccount(1)).thenReturn(testAccount);
 		double deposit = 99999.99;
+		
 		assertThrows(InvalidAmountException.class, () -> 
-			accountService.depositMoney(testAccount.getAccountId(), deposit));
+			accountService.withdrawMoney(testAccount.getAccountId(), deposit));
 	}
+	
+	@Test
+	void getTransactions_validAccountId_returnTransactionList() {
+		when(accountRepository.getAccount(1)).thenReturn(testAccount);
+		
+		Transaction transaction = new Transaction();
+		transactions.add(transaction);
+		
+		when(transactionRepository.getTransaction(1, 1)).thenReturn(transactions);
+		
+		assertThat(accountService.getTransactions(testAccount.getAccountId(), 1)).hasSize(1);
+	}
+	
+	@Test
+	void getTransactions_invalidAccountId_throwIllegalArgumentException()  {
+		when(accountRepository.getAccount(-1)).thenThrow(IllegalArgumentException.class);
+		
+		assertThrows(IllegalArgumentException.class, () -> 
+		accountService.getTransactions(-1, 100));
+
+	}
+
 
 }

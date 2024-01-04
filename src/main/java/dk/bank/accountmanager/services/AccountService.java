@@ -1,6 +1,7 @@
 package dk.bank.accountmanager.services;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,12 +14,16 @@ import dk.bank.accountmanager.exceptions.InvalidAccountNameException;
 import dk.bank.accountmanager.exceptions.InvalidAmountException;
 import dk.bank.accountmanager.interfaces.IAccountRepository;
 import dk.bank.accountmanager.interfaces.IAccountService;
+import dk.bank.accountmanager.interfaces.ITransactionRepository;
 
 @Service
 public class AccountService implements IAccountService {
 	
 	@Autowired
 	IAccountRepository accountRepository;
+	
+	@Autowired
+	ITransactionRepository transactionRepository;
 
 	@Override
 	public Account createAccount(Account account) throws InvalidAccountNameException {
@@ -52,6 +57,11 @@ public class AccountService implements IAccountService {
 		
 		Account updatedAccount = saveAndReturnAccount(account);
 		
+		Transaction transaction = new Transaction();
+		transaction.setAmount(amount);
+		transaction.setName("Deposit");
+		transactionRepository.saveTransaction(transaction);
+		
 		return updatedAccount;
 	}
 
@@ -68,6 +78,11 @@ public class AccountService implements IAccountService {
 		
 		Account updatedAccount = saveAndReturnAccount(account);
 		
+		Transaction transaction = new Transaction();
+		transaction.setAmount(-amount);
+		transaction.setName("Withdrawal");
+		transactionRepository.saveTransaction(transaction);
+		
 		return updatedAccount;
 	}
 
@@ -78,9 +93,10 @@ public class AccountService implements IAccountService {
 	}
 	
 	@Override
-	public List<Transaction> getTransactions(long accountId, int listSize) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Transaction> getTransactions(long accountId, int listSize) throws IllegalArgumentException {
+		findAccount(accountId);
+		List<Transaction> transactions = transactionRepository.getTransaction(accountId, listSize);
+		return transactions;
 	}
 
 	

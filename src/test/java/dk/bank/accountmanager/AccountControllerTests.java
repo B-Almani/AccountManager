@@ -42,8 +42,7 @@ public class AccountControllerTests {
 	@Autowired
     private MockMvc mvc;
 	
-	@Spy
-	private List<Transaction> spyTransactions = new ArrayList<Transaction>();
+	private List<Transaction> transactions = new ArrayList<Transaction>();
 	
 	private Account testAccount = new Account(1L, "Test Savings", 100.0);
 	
@@ -148,9 +147,9 @@ public class AccountControllerTests {
 	
 	@Test
 	void getTransactions_noSizeParam_return10Transactions() throws Exception {
-		populateTransactionList(spyTransactions, 10);
+		populateTransactionList(transactions, 10);
 		//when(spyTransactions.size()).thenReturn(10);
-		when(accountService.getTransactions(testAccount.getAccountId(), 10)).thenReturn(spyTransactions);
+		when(accountService.getTransactions(testAccount.getAccountId(), 10)).thenReturn(transactions);
 		
 		mvc.perform(get("/api/v1/accounts/"+testAccount.getAccountId()+"/transactions")
 			     .contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -160,8 +159,8 @@ public class AccountControllerTests {
 	
 	@Test
 	void getTransactions_GivenSizeParam_returnTransactionsOfSize() throws Exception {
-		populateTransactionList(spyTransactions, 2);
-		when(accountService.getTransactions(testAccount.getAccountId(), 2)).thenReturn(spyTransactions);
+		populateTransactionList(transactions, 2);
+		when(accountService.getTransactions(testAccount.getAccountId(), 2)).thenReturn(transactions);
 		
 		mvc.perform(get("/api/v1/accounts/"+testAccount.getAccountId()+"/transactions?size=2")
 			     .contentType(MediaType.APPLICATION_JSON_VALUE))
